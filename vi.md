@@ -116,7 +116,7 @@ MySQL hiếm khi sử dụng nhiều hơn một index trong một lần trong m�
 4. Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả những trừ hàng mong muốn.
 5. Cung cấp câu trả lời (1865-1869). 
     
-    mysql>  EXPLAIN  SELECT  term
+```    mysql>  EXPLAIN  SELECT  term
                 FROM  Presidents
                 WHERE  last_name = 'Johnson'
                   AND  first_name = 'Andrew'  G
@@ -129,6 +129,7 @@ MySQL hiếm khi sử dụng nhiều hơn một index trong một lần trong m�
               ref: const
              rows: 2                  <-- Hai 'Johnson's
             Extra: Using where
+```
 
 ## "Index Merge Intersect" 
 
