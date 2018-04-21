@@ -110,11 +110,11 @@ MySQL hiếm khi sử dụng nhiều hơn một index trong một lần trong m�
 
 * first_name -- có hai hàng có thể (một tra cứu BTree, sau đó scan liên tục)
 * last_name -- có hai hàng có thể. Giả sử nó chọn last_name. Đây là những bước cho việc SELECT:
-⋅⋅1. Sử dụng INDEX(last_name), tìm 2 index với last_name = 'Johnson'.
-⋅⋅2. Lấy KHÓA CHÍNH (đã ngầm thêm vào mỗi index thứ cấp trong )InnoDB; lấy (17, 36). 
-⋅⋅3. Tiếp cận dữ liệu sử dụng seq = (17, 36) để lấy những hàng cho Andrew Johnson và Lyndon B. Johnson. 
-⋅⋅4. Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả những trừ hàng mong muốn.
-⋅⋅5. Cung cấp câu trả lời (1865-1869). 
+1. Sử dụng INDEX(last_name), tìm 2 index với last_name = 'Johnson'.
+2. Lấy KHÓA CHÍNH (đã ngầm thêm vào mỗi index thứ cấp trong )InnoDB; lấy (17, 36). 
+3. Tiếp cận dữ liệu sử dụng seq = (17, 36) để lấy những hàng cho Andrew Johnson và Lyndon B. Johnson. 
+4. Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả những trừ hàng mong muốn.
+5. Cung cấp câu trả lời (1865-1869). 
     
     mysql>  EXPLAIN  SELECT  term
                 FROM  Presidents
@@ -133,11 +133,11 @@ MySQL hiếm khi sử dụng nhiều hơn một index trong một lần trong m�
 ## "Index Merge Intersect" 
 
 OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng MySQL nên đủ thông minh để sử dụng tên index giống nhau để có câu trả lời. Điều này được gọi là "Intersect".
-⋅⋅1. Sử dụng INDEX(last_name), tìm 2 index với last_name = 'Johnson'; nhận được (7, 17) 
-⋅⋅2. Sử dụng INDEX(first_name), tìm 2 index với first_name = 'Andrew'; nhận được (17, 36) 
-⋅⋅3. "And" hai danh sách cùng nhau (7,17) & (17,36) = (17) 
-⋅⋅4. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
-⋅⋅5. Cung cấp câu trả lời (1865-1869). 
+1. Sử dụng INDEX(last_name), tìm 2 index với last_name = 'Johnson'; nhận được (7, 17) 
+2. Sử dụng INDEX(first_name), tìm 2 index với first_name = 'Andrew'; nhận được (17, 36) 
+3. "And" hai danh sách cùng nhau (7,17) & (17,36) = (17) 
+4. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
+5. Cung cấp câu trả lời (1865-1869). 
     
     
                id: 1
@@ -157,9 +157,9 @@ Mệnh đề EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu h
 ## INDEX(last_name, first_name)
 
 Đó họ là "hỗn hợp" hoặc "composite" index khi nó có nhiều hơn một cột.
-⋅⋅1. Đi sâu vào BTree để đánh chỉ mục có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
-⋅⋅2. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
-⋅⋅3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
+1. Đi sâu vào BTree để đánh chỉ mục có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
+2. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
+3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
     
     
         ALTER TABLE Presidents
