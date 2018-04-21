@@ -1,20 +1,22 @@
-[Source](https://mariadb.com/kb/en/library/compound-composite-indexes/ "Permalink to Compound (Composite) Indexes - MariaDB Knowledge Base")
+[Nguồn](https://mariadb.com/kb/en/library/compound-composite-indexes/ "Permalink to Compound (Composite) Indexes - MariaDB Knowledge Base")
 
 # Compound (Composite) Indexes - MariaDB Knowledge Base
+# Chỉ mục hỗn hợp (Composite Index) - Kiến thức MariaDB cơ bản
 
 ## A mini-lesson in "compound indexes" ("composite indexes")
+## Một bài học nhỏ trong "Chỉ mục hỗn hợp" ("composite Index")
 
-This document starts out trivial and perhaps boring, but builds up to more interesting information, perhaps things you did not realize about how MariaDB and MySQL indexing works.
+Tài liệu này bắt đầu có vẻ tầm thường và nhàm chán, nhưng xây dựng lên nhiều thông tin thú vị hơn, có lẽ bạn không nhận ra về cách mà chỉ mục (index) của MariaDB và MySQL hoạt động.
 
-This also explains [EXPLAIN][1] (to some extent).
+Nó cũng giải thích [EXPLAIN][1] ( đến một mức độ nào đó).
 
-(Most of this applies to non-MySQL brands of databases, too.)
+( Hầu hết điều này cũng áp dụng cho các loại cơ sở dữ liệu không phải MySQL)
 
-## The query to discuss
+## Truy vấn để thảo luận
 
-The question is "When was Andrew Johnson president of the US?".
+Câu hỏi là "Andrew Johnson đã trở thành tổng thống Mỹ khi nào?".
 
-The available table `Presidents` looks like:
+Bảng `Presidents` có sẵn trông giống như:
     
     
     +-----+------------+----------------+-----------+
@@ -31,9 +33,9 @@ The available table `Presidents` looks like:
     ...
     
 
-("Andrew Johnson" was picked for this lesson because of the duplicates.)
+("Andrew Johnson" đã được chọn cho bài học này bởi vì những sự trùng lặp)
 
-What index(es) would be best for that question? More specifically, what would be best for
+index(nhiều index) nào là tốt nhất cho câu hỏi đó? Cụ thể hơn, cái nào là tốt nhất cho
     
     
         SELECT  term
@@ -42,18 +44,18 @@ What index(es) would be best for that question? More specifically, what would be
               AND  first_name = 'Andrew';
     
 
-Some INDEXes to try...
+Một vài INDEX để thử...
 
-* No indexes 
-* INDEX(first_name), INDEX(last_name) (two separate indexes) 
-* "Index Merge Intersect" 
-* INDEX(last_name, first_name) (a "compound" index) 
-* INDEX(last_name, first_name, term) (a "covering" index) 
-* Variants 
+* Không index
+* INDEX(first_name), INDEX(last_name) (hai index riêng biệt) 
+* "Index Merge Intersect"
+* INDEX(last_name, first_name) (một index "hỗn hợp") 
+* INDEX(last_name, first_name, term) (một index bao hàm) 
+* Biến thể 
 
-## No indexes
+## Không index
 
-Well, I am fudging a little here. I have a PRIMARY KEY on `seq`, but that has no advantage on the query we are studying.
+Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA CHÍNH (PRIMARY KEY) tại `seq`, nhưng nó không có lợi ích trong truy vấn mà chúng ta đang học.
     
     
     mysql>  SHOW CREATE TABLE Presidents G
@@ -79,36 +81,40 @@ Well, I am fudging a little here. I have a PRIMARY KEY on `seq`, but that has no
                id: 1
       select_type: SIMPLE
             table: Presidents
-             type: ALL        <-- Implies table scan
+             type: ALL        <-- Ngụ ý là scan bảng
     possible_keys: NULL
-              key: NULL       <-- Implies that no index is useful, hence table scan
+              key: NULL       <-- Ngụ ý là không có index nào hữu ích, do đó scan bảng
           key_len: NULL
               ref: NULL
-             rows: 44         <-- That's about how many rows in the table, so table scan
+             rows: 44         <-- Điều này là có bao nhiêu hàng trong bảng, vậy scan bảng
             Extra: Using where
     
 
-## Implementation details
+## Chi tiết triển khai
 
-First, let's describe how InnoDB stores and uses indexes.
+Đầu tiên, hãy giới thiệu cách InnoDB lưu trữ và sử dụng index.
 
-* The data and the PRIMARY KEY are "clustered" together in on BTree. 
-* A BTree lookup is quite fast and efficient. For a million-row table there might be 3 levels of BTree, and the top two levels are probably cached. 
-* Each secondary index is in another BTree, with the PRIMARY KEY at the leaf. 
-* Fetching 'consecutive' (according to the index) items from a BTree is very efficient because they are stored consecutively. 
-* For the sake of simplicity, we can count each BTree lookup as 1 unit of work, and ignore scans for consecutive items. This approximates the number of disk hits for a large table in a busy system. 
+* Dữ liệu và KHÓA CHÍNH (PRIMARY KEY) nhóm lại cùng nhau trên BTree.
+* Tra cứu BTree khá nhanh và hiệu quả. Cho một bảng với hàng triệu hàng có lẽ có 3 cấp độ của BTree, và hai level cao nhất được lưu vào cache.
+* Mỗi index thứ cấp trong một BTree khác, với KHÓA CHÍNH ở lá.
+* Việt lấy liên tục ( theo index ) các phần tử từ một BTree là vô cùng hiệu quả bởi vì chúng được lưu trữ liên tục.
+* Với lợi ích đơn giản, chúng ta có thể đếm mỗi lần tra cứu BTree như 1 đơn vị công việc, và loại bỏ scan phần tử liên tục. Nó xấp xỉ con số truy cập của ổ đĩa cho một bảng lớn trong một hệ thống bận.
 
-For MyISAM, the PRIMARY KEY is not stored with the data, so think of it as being a secondary key (over-simplified).
+Với MyISAM, KHÓA CHÍNH không được lưu trữ với dữ liệu, vậy suy nghĩ nó giống như một khóa thứ cấp ( quá đơn giản ).
 
 ## INDEX(first_name), INDEX(last_name)
 
-The novice, once he learns about indexing, decides to index lots of columns, one at a time. But...
+Người mới, mỗi lần anh ấy học về việc đánh index, quyết định để lập index của nhiều cột, một cái một lần. Nhưng...
 
-MySQL rarely uses more than one index at a time in a query. So, it will analyze the possible indexes.
+MySQL hiếm khi sử dụng nhiều hơn một index trong một lần trong một truy vấn. Vậy nó sẽ phân tích những index có thể.
 
-* first_name -- there are 2 possible rows (one BTree lookup, then scan consecutively) 
-* last_name -- there are 2 possible rows Let's say it picks last_name. Here are the steps for doing the SELECT: 1\. Using INDEX(last_name), find 2 index entries with last_name = 'Johnson'. 2\. Get the PRIMARY KEY (implicitly added to each secondary index in InnoDB); get (17, 36). 3\. Reach into the data using seq = (17, 36) to get the rows for Andrew Johnson and Lyndon B. Johnson. 4\. Use the rest of the WHERE clause filter out all but the desired row. 5\. Deliver the answer (1865-1869). 
-    
+* first_name -- có hai hàng có thể (một tra cứu BTree, sau đó scan liên tục)
+* last_name -- có hai hàng có thể. Giả sử nó chọn last_name. Đây là những bước cho việc SELECT:
+⋅⋅1. Sử dụng INDEX(last_name), tìm 2 index với last_name = 'Johnson'.
+⋅⋅2. Lấy KHÓA CHÍNH (đã ngầm thêm vào mỗi index thứ cấp trong )InnoDB; lấy (17, 36). 
+⋅⋅3. Tiếp cận dữ liệu sử dụng seq = (17, 36) để lấy những hàng cho Andrew Johnson và Lyndon B. Johnson. 
+⋅⋅4. Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả những trừ hàng mong muốn.
+⋅⋅5. Cung cấp câu trả lời (1865-1869). 
     
     mysql>  EXPLAIN  SELECT  term
                 FROM  Presidents
@@ -119,15 +125,19 @@ MySQL rarely uses more than one index at a time in a query. So, it will analyze 
              type: ref
     possible_keys: last_name, first_name
               key: last_name
-          key_len: 92                 <-- VARCHAR(30) utf8 may need 2+3*30 bytes
+          key_len: 92                 <-- VARCHAR(30) utf8 cần 2+3*30 bytes
               ref: const
-             rows: 2                  <-- Two 'Johnson's
+             rows: 2                  <-- Hai 'Johnson's
             Extra: Using where
-    
 
-## "Index Merge Intersect"
+## "Index Merge Intersect" 
 
-OK, so you get really smart and decide that MySQL should be smart enough to use both name indexes to get the answer. This is called "Intersect". 1\. Using INDEX(last_name), find 2 index entries with last_name = 'Johnson'; get (7, 17) 2\. Using INDEX(first_name), find 2 index entries with first_name = 'Andrew'; get (17, 36) 3\. "And" the two lists together (7,17) & (17,36) = (17) 4\. Reach into the data using seq = (17) to get the row for Andrew Johnson. 5\. Deliver the answer (1865-1869).
+OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng MySQL nên đủ thông minh để sử dụng tên index giống nhau để có câu trả lời. Điều này được gọi là "Intersect".
+⋅⋅1. Sử dụng INDEX(last_name), tìm 2 index với last_name = 'Johnson'; nhận được (7, 17) 
+⋅⋅2. Sử dụng INDEX(first_name), tìm 2 index với first_name = 'Andrew'; nhận được (17, 36) 
+⋅⋅3. "And" hai danh sách cùng nhau (7,17) & (17,36) = (17) 
+⋅⋅4. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
+⋅⋅5. Cung cấp câu trả lời (1865-1869). 
     
     
                id: 1
@@ -142,11 +152,14 @@ OK, so you get really smart and decide that MySQL should be smart enough to use 
             Extra: Using intersect(first_name,last_name); Using where
     
 
-The EXPLAIN fails to give the gory details of how many rows collected from each index, etc.
+Mệnh đề EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi index, vân vân.
 
 ## INDEX(last_name, first_name)
 
-This is called a "compound" or "composite" index since it has more than one column. 1\. Drill down the BTree for the index to get to exactly the index row for Johnson+Andrew; get seq = (17). 2\. Reach into the data using seq = (17) to get the row for Andrew Johnson. 3\. Deliver the answer (1865-1869). This is much better. In fact this is usually the "best".
+Đó họ là "hỗn hợp" hoặc "composite" index khi nó có nhiều hơn một cột.
+⋅⋅1. Đi sâu vào BTree để đánh chỉ mục có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
+⋅⋅2. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
+⋅⋅3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
     
     
         ALTER TABLE Presidents
