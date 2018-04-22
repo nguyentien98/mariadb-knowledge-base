@@ -208,9 +208,7 @@ Mọi thứ tương tự để sử dụng "compound", ngoại trừ việc bổ
 * Chuyện gì xảy ra nếu bạn xáo trộn những trường trong mệnh đề WHERE? Câu trả lời: Thứ tự của AND không quan trọng.
 * Chuyện gì xảy ra nếu bạn xáo trộn những trường trong mệnh đề INDEX? Câu trả lời: Nó có lẽ tại ta một sự khác biệt lớn. Nhiều hơn trong một phút.
 * Chuyện gì nếu có những trường thêm ở cuối? Câu trả lời: Tác hại tối thiểu; có thể có nhiều cái hay (ví dụ: 'bao hàm').
-* Reduncancy? That is, what if you have both of these: INDEX(a), INDEX(a,b)? Answer: Reduncy costs something on INSERTs; it is rarely useful for SELECTs. 
 * Thừa thãi ư? Đúng vậy, chuyện gì nếu bạn có cả 2 thứ này: INDEX(a), INDEX(a,b)? Câu trả lời: thừa chi phí gì đó trên câu lệnh INSERT; Nó hiếm khi dùng cho câu lệnh SELECT.
-* Prefix? That is, INDEX(last_name(5). first_name(5)) Answer: Don't bother; it rarely helps, and often hurts. (The details are another topic.) 
 * Tiền tố? Đúng vậy, INDEX(last_name(5). first_name(5)). Câu trả lời: Đừng bận tâm; nó hiếm khi giúp và thường có hại. (Những chi tiết là một chủ đề khác).
 
 ## Ví dụ khác:
