@@ -113,8 +113,8 @@ MySQL hiếm khi sử dụng nhiều hơn một index trong một lần trong m�
 3. Tiếp cận dữ liệu sử dụng seq = (17, 36) để lấy những hàng cho Andrew Johnson và Lyndon B. Johnson. 
 4. Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả những trừ hàng mong muốn.
 5. Cung cấp câu trả lời (1865-1869). 
-    
-```    mysql>  EXPLAIN  SELECT  term
+
+    mysql>  EXPLAIN  SELECT  term
                 FROM  Presidents
                 WHERE  last_name = 'Johnson'
                   AND  first_name = 'Andrew'  G
@@ -127,7 +127,8 @@ MySQL hiếm khi sử dụng nhiều hơn một index trong một lần trong m�
               ref: const
              rows: 2                  <-- Hai 'Johnson's
             Extra: Using where
-```
+
+
 
 ## "Index Merge Intersect" 
 
@@ -147,7 +148,8 @@ OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng M
           key_len: 92,92
               ref: NULL
              rows: 1
-            Extra: Using intersect(first_name,last_name); Using where ```
+            Extra: Using intersect(first_name,last_name); Using where 
+```
 
 
 Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi index, vân vân.
@@ -160,7 +162,8 @@ Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu h�
 3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
 
 
-``` ALTER TABLE Presidents
+``` 
+ALTER TABLE Presidents
             (drop old indexes and...)
             ADD INDEX compound(last_name, first_name);
     
@@ -173,7 +176,8 @@ Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu h�
           key_len: 184             <-- Độ dài của cả 2 trường
               ref: const,const     <-- Mệnh đề WHERE trả về hằng cho cả 2
              rows: 1               <-- Goodie!  It homed in on the one row.
-            Extra: Using where ```
+            Extra: Using where
+```
 
 
 ## "Bao hàm": INDEX(last_name, first_name, term)
@@ -193,7 +197,8 @@ Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. M�
           key_len: 184
               ref: const,const
              rows: 1
-            Extra: Using where; Using index   <-- Note ```
+            Extra: Using where; Using index   <-- Note 
+```
 
 Mọi thứ tương tự để sử dụng "compound", ngoại trừ việc bổ sung "sử dụng index".
 
