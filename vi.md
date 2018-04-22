@@ -33,7 +33,7 @@ Bảng `Presidents` có sẵn trông giống như:
 
 ("Andrew Johnson" đã được chọn cho bài học này bởi vì những sự trùng lặp)
 
-index(nhiều index) nào là tốt nhất cho câu hỏi đó? Cụ thể hơn, cái nào là tốt nhất cho
+Chỉ mục(nhiều chỉ mục) nào là tốt nhất cho câu hỏi đó? Cụ thể hơn, cái nào là tốt nhất cho
     
     
         SELECT  term
@@ -44,14 +44,14 @@ index(nhiều index) nào là tốt nhất cho câu hỏi đó? Cụ thể hơn,
 
 Một vài INDEX để thử...
 
-* Không index
-* INDEX(first_name), INDEX(last_name) (hai index riêng biệt) 
+* Không chỉ mục
+* INDEX(first_name), INDEX(last_name) (hai chỉ mục riêng biệt) 
 * "Index Merge Intersect"
-* INDEX(last_name, first_name) (một index "compound") 
-* INDEX(last_name, first_name, term) (một index bao hàm) 
+* INDEX(last_name, first_name) (một chỉ mục "compound") 
+* INDEX(last_name, first_name, term) (một chỉ mục bao hàm) 
 * Biến thể 
 
-## Không index
+## Không chỉ mục
 
 Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA CHÍNH (PRIMARY KEY) tại `seq`, nhưng nó không có lợi ích trong truy vấn mà chúng ta đang học.
     
@@ -90,26 +90,26 @@ Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA C
 
 ## Chi tiết triển khai
 
-Đầu tiên, hãy giới thiệu cách InnoDB lưu trữ và sử dụng index.
+Đầu tiên, hãy giới thiệu cách InnoDB lưu trữ và sử dụng chỉ mục.
 
 * Dữ liệu và KHÓA CHÍNH (PRIMARY KEY) nhóm lại cùng nhau trên BTree.
 * Tra cứu BTree khá nhanh và hiệu quả. Cho một bảng với hàng triệu hàng có lẽ có 3 cấp độ của BTree, và hai level cao nhất được lưu vào cache.
-* Mỗi index thứ cấp trong một BTree khác, với KHÓA CHÍNH ở lá.
-* Việt lấy liên tục ( theo index ) các phần tử từ một BTree là vô cùng hiệu quả bởi vì chúng được lưu trữ liên tục.
+* Mỗi chỉ mục thứ cấp trong một BTree khác, với KHÓA CHÍNH ở lá.
+* Việt lấy liên tục ( theo chỉ mục ) các phần tử từ một BTree là vô cùng hiệu quả bởi vì chúng được lưu trữ liên tục.
 * Với lợi ích đơn giản, chúng ta có thể đếm mỗi lần tra cứu BTree như 1 đơn vị công việc, và loại bỏ scan phần tử liên tục. Nó xấp xỉ con số truy cập của ổ đĩa cho một bảng lớn trong một hệ thống bận.
 
 Với MyISAM, KHÓA CHÍNH không được lưu trữ với dữ liệu, vậy suy nghĩ nó giống như một khóa thứ cấp ( quá đơn giản ).
 
 ## INDEX(first_name), INDEX(last_name)
 
-Người mới, mỗi lần anh ấy học về việc đánh index, quyết định để lập index của nhiều cột, một cái một lần. Nhưng...
+Người mới, mỗi lần anh ấy học về việc đánh chỉ mục, quyết định để lập chỉ mục của nhiều cột, một cái một lần. Nhưng...
 
-MySQL hiếm khi sử dụng nhiều hơn một index trong một lần trong một truy vấn. Vậy nó sẽ phân tích những index có thể.
+MySQL hiếm khi sử dụng nhiều hơn một chỉ mục trong một lần trong một truy vấn. Vậy nó sẽ phân tích những chỉ mục có thể.
 
 * first_name -- có hai hàng có thể (một tra cứu BTree, sau đó scan liên tục)
 * last_name -- có hai hàng có thể. Giả sử nó chọn last_name. Đây là những bước cho việc SELECT:
-1. Sử dụng INDEX(last_name), tìm 2 index với last_name = 'Johnson'.
-2. Lấy KHÓA CHÍNH (đã ngầm thêm vào mỗi index thứ cấp trong )InnoDB; lấy (17, 36). 
+1. Sử dụng INDEX(last_name), tìm 2 chỉ mục với last_name = 'Johnson'.
+2. Lấy KHÓA CHÍNH (đã ngầm thêm vào mỗi chỉ mục thứ cấp trong )InnoDB; lấy (17, 36). 
 3. Tiếp cận dữ liệu sử dụng seq = (17, 36) để lấy những hàng cho Andrew Johnson và Lyndon B. Johnson. 
 4. Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả những trừ hàng mong muốn.
 5. Cung cấp câu trả lời (1865-1869). 
@@ -133,9 +133,9 @@ mysql>  EXPLAIN  SELECT  term
 
 ## "Index Merge Intersect" 
 
-OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng MySQL nên đủ thông minh để sử dụng tên index giống nhau để có câu trả lời. Điều này được gọi là "Intersect".
-1. Sử dụng INDEX(last_name), tìm 2 index với last_name = 'Johnson'; nhận được (7, 17) 
-2. Sử dụng INDEX(first_name), tìm 2 index với first_name = 'Andrew'; nhận được (17, 36) 
+OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng MySQL nên đủ thông minh để sử dụng tên chỉ mục giống nhau để có câu trả lời. Điều này được gọi là "Intersect".
+1. Sử dụng INDEX(last_name), tìm 2 chỉ mục với last_name = 'Johnson'; nhận được (7, 17) 
+2. Sử dụng INDEX(first_name), tìm 2 chỉ mục với first_name = 'Andrew'; nhận được (17, 36) 
 3. "And" hai danh sách cùng nhau (7,17) & (17,36) = (17) 
 4. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
 5. Cung cấp câu trả lời (1865-1869). 
@@ -153,12 +153,12 @@ OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng M
 ```
 
 
-Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi index, vân vân.
+Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi chỉ mục, vân vân.
 
 ## INDEX(last_name, first_name)
 
 Đó họ là "compound" hoặc "composite" index khi nó có nhiều hơn một cột.
-1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
+1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác chỉ mục của hàng cho Johnson+Andrew; có được seq = (17). 
 2. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
 3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
 
@@ -183,8 +183,8 @@ ALTER TABLE Presidents
 
 ## "Bao hàm": INDEX(last_name, first_name, term)
 
-Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. Một index "bao hàm" là một trong cái _all_ của các trường của SELECT được tìm thấy trong index. Nó có điểm cộng thêm là không phải tiếp cận vào "dữ liệu" để hoàn thành nhiệm vụ.
-1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
+Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. Một chỉ mục "bao hàm" là một trong cái _all_ của các trường của SELECT được tìm thấy trong chỉ mục. Nó có điểm cộng thêm là không phải tiếp cận vào "dữ liệu" để hoàn thành nhiệm vụ.
+1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác chỉ mục của hàng cho Johnson+Andrew; có được seq = (17). 
 2. Cung cấp câu trả lời (1865-1869). Dữ liệu BTree chưa được chạm vào; điều này là sự cải tiến hơn "composite".
     
 ```    
@@ -201,7 +201,7 @@ Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. M�
             Extra: Using where; Using index   <-- Note 
 ```
 
-Mọi thứ tương tự để sử dụng "compound", ngoại trừ việc bổ sung "sử dụng index".
+Mọi thứ tương tự để sử dụng "compound", ngoại trừ việc bổ sung "sử dụng chỉ mục".
 
 ## Biến thể
 
