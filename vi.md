@@ -49,7 +49,7 @@ Một vài INDEX để thử...
 * Không index
 * INDEX(first_name), INDEX(last_name) (hai index riêng biệt) 
 * "Index Merge Intersect"
-* INDEX(last_name, first_name) (một index "hỗn hợp") 
+* INDEX(last_name, first_name) (một index "compound") 
 * INDEX(last_name, first_name, term) (một index bao hàm) 
 * Biến thể 
 
@@ -153,12 +153,12 @@ OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng M
             Extra: Using intersect(first_name,last_name); Using where
     
 
-Mệnh đề EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi index, vân vân.
+Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi index, vân vân.
 
 ## INDEX(last_name, first_name)
 
-Đó họ là "hỗn hợp" hoặc "composite" index khi nó có nhiều hơn một cột.
-1. Đi sâu vào BTree để đánh chỉ mục có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
+Đó họ là "compound" hoặc "composite" index khi nó có nhiều hơn một cột.
+1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
 2. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
 3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
     
@@ -173,19 +173,20 @@ Mệnh đề EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu h
              type: ref
     possible_keys: compound
               key: compound
-          key_len: 184             <-- The length of both fields
-              ref: const,const     <-- The WHERE clause gave constants for both
+          key_len: 184             <-- Độ dài của cả 2 trường
+              ref: const,const     <-- Mệnh đề WHERE trả về hằng cho cả 2
              rows: 1               <-- Goodie!  It homed in on the one row.
             Extra: Using where
     
 
-## "Covering": INDEX(last_name, first_name, term)
+## "Bao hàm": INDEX(last_name, first_name, term)
 
-Surprise! We can actually do a little better. A "Covering" index is one in which _all_ of the fields of the SELECT are found in the index. It has the added bonus of not having to reach into the "data" to finish the task. 1\. Drill down the BTree for the index to get to exactly the index row for Johnson+Andrew; get seq = (17). 2\. Deliver the answer (1865-1869). The "data" BTree is not touched; this is an improvement over "compound".
+Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. Một index "bao hàm" là một trong cái _all_ của các trường của SELECT được tìm thấy trong index. Nó có điểm cộng thêm là không phải tiếp cận vào "dữ liệu" để hoàn thành nhiệm vụ.
+1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
+2. Cung cấp câu trả lời (1865-1869). Dữ liệu BTree chưa được chạm vào; điều này là sự cải tiến hơn "composite".
     
     
         ... ADD INDEX covering(last_name, first_name, term);
-    
                id: 1
       select_type: SIMPLE
             table: Presidents
@@ -198,17 +199,19 @@ Surprise! We can actually do a little better. A "Covering" index is one in which
             Extra: Using where; Using index   <-- Note
     
 
-Everything is similar to using "compound", except for the addition of "Using index".
+Mọi thứ tương tự để sử dụng "compound", ngoại trừ việc bổ sung "sử dụng index".
 
-## Variants
+## Biến thể
 
-* What would happen if you shuffled the fields in the WHERE clause? Answer: The order of ANDed things does not matter. 
-* What would happen if you shuffled the fields in the INDEX? Answer: It may make a huge difference. More in a minute. 
-* What if there are extra fields on the the end? Answer: Minimal harm; possibly a lot of good (eg, 'covering'). 
+* Chuyện gì xảy ra nếu bạn xáo trộn những trường trong mệnh đề WHERE? Câu trả lời: Thứ tự của AND không quan trọng.
+* Chuyện gì xảy ra nếu bạn xáo trộn những trường trong mệnh đề INDEX? Câu trả lời: Nó có lẽ tại ta một sự khác biệt lớn. Nhiều hơn trong một phút.
+* Chuyện gì nếu có những trường thêm ở cuối? Câu trả lời: Tác hại tối thiểu; có thể có nhiều cái hay (ví dụ: 'bao hàm').
 * Reduncancy? That is, what if you have both of these: INDEX(a), INDEX(a,b)? Answer: Reduncy costs something on INSERTs; it is rarely useful for SELECTs. 
+* Thừa thãi ư? Đúng vậy, chuyện gì nếu bạn có cả 2 thứ này: INDEX(a), INDEX(a,b)? Câu trả lời: thừa chi phí gì đó trên câu lệnh INSERT; Nó hiếm khi dùng cho câu lệnh SELECT.
 * Prefix? That is, INDEX(last_name(5). first_name(5)) Answer: Don't bother; it rarely helps, and often hurts. (The details are another topic.) 
+* Tiền tố? Đúng vậy, INDEX(last_name(5). first_name(5)). Câu trả lời: Đừng bận tâm; nó hiếm khi giúp và thường có hại. (Những chi tiết là một chủ đề khác).
 
-## More examples:
+## Ví dụ khác:
     
     
         INDEX(last, first)
