@@ -138,7 +138,7 @@ OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng M
 4. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
 5. Cung cấp câu trả lời (1865-1869). 
     
-    
+```    
                id: 1
       select_type: SIMPLE
             table: Presidents
@@ -149,7 +149,7 @@ OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng M
               ref: NULL
              rows: 1
             Extra: Using intersect(first_name,last_name); Using where
-    
+    ```
 
 Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi index, vân vân.
 
@@ -160,8 +160,7 @@ Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu h�
 2. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
 3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
     
-    
-        ALTER TABLE Presidents
+``` ALTER TABLE Presidents
             (drop old indexes and...)
             ADD INDEX compound(last_name, first_name);
     
@@ -174,8 +173,7 @@ Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu h�
           key_len: 184             <-- Độ dài của cả 2 trường
               ref: const,const     <-- Mệnh đề WHERE trả về hằng cho cả 2
              rows: 1               <-- Goodie!  It homed in on the one row.
-            Extra: Using where
-    
+            Extra: Using where ```
 
 ## "Bao hàm": INDEX(last_name, first_name, term)
 
@@ -183,7 +181,7 @@ Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. M�
 1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác index của hàng cho Johnson+Andrew; có được seq = (17). 
 2. Cung cấp câu trả lời (1865-1869). Dữ liệu BTree chưa được chạm vào; điều này là sự cải tiến hơn "composite".
     
-    
+```    
         ... ADD INDEX covering(last_name, first_name, term);
                id: 1
       select_type: SIMPLE
@@ -194,8 +192,7 @@ Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. M�
           key_len: 184
               ref: const,const
              rows: 1
-            Extra: Using where; Using index   <-- Note
-    
+            Extra: Using where; Using index   <-- Note ```
 
 Mọi thứ tương tự để sử dụng "compound", ngoại trừ việc bổ sung "sử dụng index".
 
