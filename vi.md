@@ -138,8 +138,7 @@ OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng M
 4. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
 5. Cung cấp câu trả lời (1865-1869). 
     
-```    
-               id: 1
+```   id: 1
       select_type: SIMPLE
             table: Presidents
              type: index_merge
@@ -148,8 +147,7 @@ OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng M
           key_len: 92,92
               ref: NULL
              rows: 1
-            Extra: Using intersect(first_name,last_name); Using where
-    ```
+            Extra: Using intersect(first_name,last_name); Using where ```
 
 Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi index, vân vân.
 
