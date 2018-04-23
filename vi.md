@@ -1,10 +1,10 @@
 [Nguồn](https://mariadb.com/kb/en/library/compound-composite-indexes/ "Permalink to Compound (Composite) Indexes - MariaDB Knowledge Base")
 
-# Chỉ mục hỗn hợp (Composite Index) - Kiến thức MariaDB cơ bản
+# Compound (Composite) Indexes - Kiến thức cơ bản về MariaDB
 
-## Một bài học nhỏ trong "Chỉ mục hỗn hợp" ("composite Index")
+## Một bài học nhỏ trong "compound indexes" ("composite Index")
 
-Tài liệu này bắt đầu có vẻ tầm thường và nhàm chán, nhưng xây dựng lên nhiều thông tin thú vị hơn, có lẽ bạn không nhận ra về cách mà chỉ mục (index) của MariaDB và MySQL hoạt động.
+Tài liệu này bắt đầu có vẻ tầm thường và nhàm chán, nhưng tích lũy nhiều thông tin thú vị hơn, có lẽ bạn không nhận ra về cách mà chỉ mục (index) của MariaDB và MySQL hoạt động.
 
 Nó cũng giải thích [EXPLAIN][1] ( đến một mức độ nào đó).
 
@@ -31,9 +31,9 @@ Bảng `Presidents` có sẵn trông giống như:
     ...
     
 
-("Andrew Johnson" đã được chọn cho bài học này bởi vì những sự trùng lặp)
+("Andrew Johnson" đã được chọn cho bài học này bởi vì sự lặp lại của nó)
 
-Chỉ mục(nhiều chỉ mục) nào là tốt nhất cho câu hỏi đó? Cụ thể hơn, cái nào là tốt nhất cho
+Chỉ mục(các chỉ mục) nào là tốt nhất cho câu hỏi đó? Cụ thể hơn, cái nào là tốt nhất cho
     
     
         SELECT  term
@@ -48,12 +48,12 @@ Một vài INDEX để thử...
 * INDEX(first_name), INDEX(last_name) (hai chỉ mục riêng biệt) 
 * "Index Merge Intersect"
 * INDEX(last_name, first_name) (một chỉ mục "compound") 
-* INDEX(last_name, first_name, term) (một chỉ mục bao hàm) 
+* INDEX(last_name, first_name, term) (một chỉ "covering") 
 * Biến thể 
 
 ## Không chỉ mục
 
-Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA CHÍNH (PRIMARY KEY) tại `seq`, nhưng nó không có lợi ích trong truy vấn mà chúng ta đang học.
+Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA CHÍNH (PRIMARY KEY) tại `seq`, nhưng nó không có ích trong truy vấn mà chúng ta đang học.
     
     
     mysql>  SHOW CREATE TABLE Presidents G
@@ -75,7 +75,7 @@ Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA C
     |  1 | SIMPLE      | Presidents | ALL  | NULL          | NULL | NULL    | NULL |   44 | Using where |
     +----+-------------+------------+------+---------------+------+---------+------+------+-------------+
     
-    # Or, using the other form of display:  EXPLAIN ... G
+    # Hoặc,sử dụng hình thức hiển thị khác:  EXPLAIN ... G
                id: 1
       select_type: SIMPLE
             table: Presidents
@@ -88,26 +88,26 @@ Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA C
             Extra: Using where
     
 
-## Chi tiết triển khai
+## Chi tiết thực hiện
 
-Đầu tiên, hãy giới thiệu cách InnoDB lưu trữ và sử dụng chỉ mục.
+Đầu tiên, hãy mô tả cách InnoDB lưu trữ và sử dụng chỉ mục.
 
-* Dữ liệu và KHÓA CHÍNH (PRIMARY KEY) nhóm lại cùng nhau trên BTree.
-* Tra cứu BTree khá nhanh và hiệu quả. Cho một bảng với hàng triệu hàng có lẽ có 3 cấp độ của BTree, và hai level cao nhất được lưu vào cache.
-* Mỗi chỉ mục thứ cấp trong một BTree khác, với KHÓA CHÍNH ở lá.
-* Việt lấy liên tục ( theo chỉ mục ) các phần tử từ một BTree là vô cùng hiệu quả bởi vì chúng được lưu trữ liên tục.
-* Với lợi ích đơn giản, chúng ta có thể đếm mỗi lần tra cứu BTree như 1 đơn vị công việc, và loại bỏ scan phần tử liên tục. Nó xấp xỉ con số truy cập của ổ đĩa cho một bảng lớn trong một hệ thống bận.
+* Dữ liệu và KHÓA CHÍNH (PRIMARY KEY) được nhóm lại cùng nhau trên BTree.
+* Tra cứu BTree khá nhanh và hiệu quả. Cho một bảng với hàng triệu hàng có thể có 3 cấp độ của BTree, và hai cấp độ cao nhất có thể được lưu vào cache.
+* Mỗi chỉ mục thứ cấp nằm trong một BTree khác, với KHÓA CHÍNH(PRIMARY KEY) ở lá.
+* Việt lấy "liên tục" ( theo chỉ mục ) các phần tử từ một BTree là vô cùng hiệu quả bởi vì chúng được lưu trữ liên tục.
+* Với lợi ích đơn giản, chúng ta có thể đếm mỗi lần tra cứu BTree như 1 đơn vị công việc, và bỏ qua các lần quét cho các mục liên tiếp. Điều này xấp xỉ số lần truy cập vào ổ đĩa cho một bảng lớn trong một hệ thống bận.
 
 Với MyISAM, KHÓA CHÍNH không được lưu trữ với dữ liệu, vậy suy nghĩ nó giống như một khóa thứ cấp ( quá đơn giản ).
 
 ## INDEX(first_name), INDEX(last_name)
 
-Người mới, mỗi lần anh ấy học về việc đánh chỉ mục, quyết định để lập chỉ mục của nhiều cột, một cái một lần. Nhưng...
+Với người mới làm quen, mỗi lần anh ấy học được việc đánh chỉ mục, quyết định để lập chỉ mục của nhiều cột, một cái một lần. Nhưng...
 
 MySQL hiếm khi sử dụng nhiều hơn một chỉ mục trong một lần trong một truy vấn. Vậy nó sẽ phân tích những chỉ mục có thể.
 
-* first_name -- có hai hàng có thể (một tra cứu BTree, sau đó scan liên tục)
-* last_name -- có hai hàng có thể. Giả sử nó chọn last_name. Đây là những bước cho việc SELECT:
+* first_name -- có hai hàng khả dụng (một tra cứu BTree, sau đó scan liên tục)
+* last_name -- có hai hàng khả dụng. Giả sử nó chọn last_name. Đây là những bước cho việc SELECT:
 1. Sử dụng INDEX(last_name), tìm 2 chỉ mục với last_name = 'Johnson'.
 2. Lấy KHÓA CHÍNH (đã ngầm thêm vào mỗi chỉ mục thứ cấp trong )InnoDB; lấy (17, 36). 
 3. Tiếp cận dữ liệu sử dụng seq = (17, 36) để lấy những hàng cho Andrew Johnson và Lyndon B. Johnson. 
@@ -153,14 +153,14 @@ OK, vậy bạn trở thành cực kỳ thông minh và quyết định rằng M
 ```
 
 
-Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu hàng được thu thập từ mỗi chỉ mục, vân vân.
+Câu lệnh EXPLAIN không cho ra thông tin chi tiết về số lượng hàng được thu thập từ mỗi chỉ mục, vân vân.
 
 ## INDEX(last_name, first_name)
 
-Đó họ là "compound" hoặc "composite" index khi nó có nhiều hơn một cột.
+Đây gọi là một chỉ mục "compound" hoặc "composite" vì nó có nhiều hơn một cột.
 1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác chỉ mục của hàng cho Johnson+Andrew; có được seq = (17). 
 2. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
-3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
+3. Đưa ra câu trả lời (1865-1869). Điều này tốt hơn nhiều. Trong thực tế điều này thường là "best".
 
 
 ``` 
@@ -183,9 +183,9 @@ ALTER TABLE Presidents
 
 ## "Bao hàm": INDEX(last_name, first_name, term)
 
-Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. Một chỉ mục "bao hàm" là một trong cái _all_ của các trường của SELECT được tìm thấy trong chỉ mục. Nó có điểm cộng thêm là không phải tiếp cận vào "dữ liệu" để hoàn thành nhiệm vụ.
+Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. Một chỉ mục "bao hàm" là một trong  _tất cả_ các trường của SELECT được tìm thấy trong chỉ mục. Nó có điểm cộng thêm là không phải tiếp cận vào "dữ liệu" để hoàn thành nhiệm vụ.
 1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác chỉ mục của hàng cho Johnson+Andrew; có được seq = (17). 
-2. Cung cấp câu trả lời (1865-1869). Dữ liệu BTree chưa được chạm vào; điều này là sự cải tiến hơn "composite".
+2. Đưa ra câu trả lời (1865-1869). Dữ liệu BTree không được chạm vào; điều này là sự cải tiến hơn "composite".
     
 ```    
         ... ADD INDEX covering(last_name, first_name, term);
@@ -209,7 +209,7 @@ Mọi thứ tương tự để sử dụng "compound", ngoại trừ việc bổ
 * Chuyện gì xảy ra nếu bạn xáo trộn những trường trong mệnh đề INDEX? Câu trả lời: Nó có lẽ tại ta một sự khác biệt lớn. Nhiều hơn trong một phút.
 * Chuyện gì nếu có những trường thêm ở cuối? Câu trả lời: Tác hại tối thiểu; có thể có nhiều cái hay (ví dụ: 'bao hàm').
 * Thừa thãi ư? Đúng vậy, chuyện gì nếu bạn có cả 2 thứ này: INDEX(a), INDEX(a,b)? Câu trả lời: thừa chi phí gì đó trên câu lệnh INSERT; Nó hiếm khi dùng cho câu lệnh SELECT.
-* Tiền tố? Đúng vậy, INDEX(last_name(5). first_name(5)). Câu trả lời: Đừng bận tâm; nó hiếm khi giúp và thường có hại. (Những chi tiết là một chủ đề khác).
+* Tiền tố? Đúng vậy, INDEX(last_name(5). first_name(5)). Câu trả lời: Đừng bận tâm; nó hiếm khi có ích và thường có hại. (Những chi tiết là một chủ đề khác).
 
 ## Ví dụ khác:
     
