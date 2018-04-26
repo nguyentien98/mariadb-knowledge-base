@@ -31,7 +31,7 @@ Bảng `Presidents` có sẵn trông giống như:
     ...
     
 
-("Andrew Johnson" đã được chọn cho bài học này bởi vì những sự trùng lặp)
+("Andrew Johnson" đã được chọn cho bài học này bởi vì có những sự trùng lặp)
 
 Chỉ mục(nhiều chỉ mục) nào là tốt nhất cho câu hỏi đó? Cụ thể hơn, cái nào là tốt nhất cho
     
@@ -53,7 +53,7 @@ Một vài INDEX để thử...
 
 ## Không chỉ mục
 
-Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA CHÍNH (PRIMARY KEY) tại `seq`, nhưng nó không có lợi ích trong truy vấn mà chúng ta đang học.
+Tốt thôi, Tôi đang giả định một chút ở đây. Tôi có một KHÓA CHÍNH (PRIMARY KEY) tại `seq`, nhưng nó không có lợi ích trong truy vấn mà chúng ta đang học.
     
     
     mysql>  SHOW CREATE TABLE Presidents G
@@ -90,21 +90,21 @@ Tốt thôi, Tôi đang vớ vẩn một chút ở đây. Tôi có một KHÓA C
 
 ## Chi tiết triển khai
 
-Đầu tiên, hãy giới thiệu cách InnoDB lưu trữ và sử dụng chỉ mục.
+Đầu tiên, hãy mô tả (describe) cách InnoDB lưu trữ và sử dụng chỉ mục.
 
 * Dữ liệu và KHÓA CHÍNH (PRIMARY KEY) nhóm lại cùng nhau trên BTree.
-* Tra cứu BTree khá nhanh và hiệu quả. Cho một bảng với hàng triệu hàng có lẽ có 3 cấp độ của BTree, và hai level cao nhất được lưu vào cache.
+* Tra cứu BTree khá nhanh và hiệu quả. Cho một bảng với hàng triệu hàng có lẽ có 3 cấp độ của BTree, và hai level cao nhất có thể được lưu vào cache.
 * Mỗi chỉ mục thứ cấp trong một BTree khác, với KHÓA CHÍNH ở lá.
-* Việt lấy liên tục ( theo chỉ mục ) các phần tử từ một BTree là vô cùng hiệu quả bởi vì chúng được lưu trữ liên tục.
-* Với lợi ích đơn giản, chúng ta có thể đếm mỗi lần tra cứu BTree như 1 đơn vị công việc, và loại bỏ scan phần tử liên tục. Nó xấp xỉ con số truy cập của ổ đĩa cho một bảng lớn trong một hệ thống bận.
+* Việt lấy liên tiếp ( theo chỉ mục ) các phần tử từ một BTree là vô cùng hiệu quả bởi vì chúng được lưu trữ liên tiếp nhau.
+* Để đơn giản, chúng ta có thể đếm mỗi lần tra cứu BTree như 1 đơn vị công việc, và  bỏ qua các lần quét cho các mục liên tiếp. Nó xấp xỉ con số truy cập của ổ đĩa cho một bảng lớn trong một hệ thống bận.
 
 Với MyISAM, KHÓA CHÍNH không được lưu trữ với dữ liệu, vậy suy nghĩ nó giống như một khóa thứ cấp ( quá đơn giản ).
 
 ## INDEX(first_name), INDEX(last_name)
 
-Người mới, mỗi lần anh ấy học về việc đánh chỉ mục, quyết định để lập chỉ mục của nhiều cột, một cái một lần. Nhưng...
+Với người mới làm quen, một khi anh ta học được về đánh chỉ mục, sẽ quyết định để lập chỉ mục của nhiều cột, một cái một lần. Nhưng...
 
-MySQL hiếm khi sử dụng nhiều hơn một chỉ mục trong một lần trong một truy vấn. Vậy nó sẽ phân tích những chỉ mục có thể.
+MySQL hiếm khi sử dụng nhiều hơn một chỉ mục trong một lần trong một truy vấn. Vậy nó sẽ phân tích những chỉ mục khả thi.
 
 * first_name -- có hai hàng có thể (một tra cứu BTree, sau đó scan liên tục)
 * last_name -- có hai hàng có thể. Giả sử nó chọn last_name. Đây là những bước cho việc SELECT:
@@ -157,7 +157,7 @@ Câu lệnh EXPLAIN lỗi để cho ra thông tin chi tiết của bao nhiêu h�
 
 ## INDEX(last_name, first_name)
 
-Đó họ là "compound" hoặc "composite" index khi nó có nhiều hơn một cột.
+Được gọi là "compound" hoặc "composite" index khi nó có nhiều hơn một cột.
 1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác chỉ mục của hàng cho Johnson+Andrew; có được seq = (17). 
 2. Tiếp cận dữ liệu sử dụng seq = (17) để có được hàng cho Andrew Johnson. 
 3. Cung cấp câu trả lời (1865-1869). Nó tốt hơn nhiều. Trong thực tế nó được gọi là "best".
@@ -183,9 +183,9 @@ ALTER TABLE Presidents
 
 ## "Bao hàm": INDEX(last_name, first_name, term)
 
-Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. Một chỉ mục "bao hàm" là một trong cái _all_ của các trường của SELECT được tìm thấy trong chỉ mục. Nó có điểm cộng thêm là không phải tiếp cận vào "dữ liệu" để hoàn thành nhiệm vụ.
+Bất ngờ chưa! Chúng ta thực ra có thể làm tốt hơn một chút. Một chỉ mục "bao hàm" là một trong số _tất cả_ của các trường của SELECT được tìm thấy trong chỉ mục. Nó có điểm cộng thêm là không phải tiếp cận vào "dữ liệu" để hoàn thành nhiệm vụ.
 1. Đi sâu vào BTree để đánh chỉ mục để có được chính xác chỉ mục của hàng cho Johnson+Andrew; có được seq = (17). 
-2. Cung cấp câu trả lời (1865-1869). Dữ liệu BTree chưa được chạm vào; điều này là sự cải tiến hơn "composite".
+2. Cung cấp câu trả lời (1865-1869). Dữ liệu BTree không được động tới; điều này là sự cải tiến hơn "composite".
     
 ```    
         ... ADD INDEX covering(last_name, first_name, term);
