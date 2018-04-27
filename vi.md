@@ -108,11 +108,11 @@ MySQL hiếm khi sử dụng nhiều hơn một chỉ mục trong một lần tr
 
 * first_name -- có hai hàng có thể (một tra cứu BTree, sau đó scan liên tục)
 * last_name -- có hai hàng có thể. Giả sử nó chọn last_name. Đây là những bước cho việc SELECT:
-1. Sử dụng INDEX(last_name), tìm 2 chỉ mục với last_name = 'Johnson'.
-2. Lấy KHÓA CHÍNH (đã ngầm thêm vào mỗi chỉ mục thứ cấp trong )InnoDB; lấy (17, 36). 
-3. Tiếp cận dữ liệu sử dụng seq = (17, 36) để lấy những hàng cho Andrew Johnson và Lyndon B. Johnson. 
-4. Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả những trừ hàng mong muốn.
-5. Cung cấp câu trả lời (1865-1869). 
+  * Sử dụng INDEX(last_name), tìm 2 chỉ mục với last_name = 'Johnson'.
+  * Lấy KHÓA CHÍNH (đã ngầm thêm vào mỗi chỉ mục thứ cấp trong )InnoDB; lấy (17, 36). 
+  * Tiếp cận dữ liệu sử dụng seq = (17, 36) để lấy những hàng cho Andrew Johnson và Lyndon B. Johnson. 
+  * Sử dụng phần còn lại của mệnh đề WHERE lọc tất cả những trừ hàng mong muốn.
+  * Cung cấp câu trả lời (1865-1869). 
 
 ```
 mysql>  EXPLAIN  SELECT  term
