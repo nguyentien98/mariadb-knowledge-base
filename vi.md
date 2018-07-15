@@ -1,5 +1,7 @@
 [Nguồn](https://mariadb.com/kb/en/library/compound-composite-indexes/ "Permalink to Compound (Composite) Indexes - MariaDB Knowledge Base")
 
+- Translated by Tien Nguyen
+
 # Chỉ mục hỗn hợp (Composite Index) - Kiến thức MariaDB cơ bản
 
 ## Một bài học nhỏ trong "Chỉ mục hỗn hợp" ("composite Index")
